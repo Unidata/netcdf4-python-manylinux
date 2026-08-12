@@ -13,6 +13,9 @@ jobs:
   build_x86_64_wheels:
     name: Build image for x86_64
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
@@ -37,6 +40,9 @@ jobs:
   build_aarch64_wheels:
     name: Build image for aarch64
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
