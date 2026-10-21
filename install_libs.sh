@@ -40,6 +40,8 @@ build_libaec(){
       cmake -S . -B build \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_INSTALL_PREFIX="${BUILD_PREFIX}" \
+            -D CMAKE_INSTALL_LIBDIR=lib \
+            -D CMAKE_INSTALL_INCLUDEDIR=include \
             -D BUILD_STATIC_LIBS=OFF \
             -D BUILD_TESTING=OFF
       make -C build -j "$(nproc)"
@@ -62,17 +64,29 @@ build_blosc() {
     mkdir c-blosc
     tar zxf "c-blosc-$BLOSC_VERSION.tar.gz" --strip-components=1 --directory c-blosc
 
+
     pushd c-blosc
       mkdir build && cd build
       #  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 to bypass incompatibility with cmake v4
       # until https://github.com/Blosc/c-blosc/issues/394 is closed.
-      cmake .. -DCMAKE_INSTALL_PREFIX=${BUILD_PREFIX} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DPREFER_EXTERNAL_ZSTD=ON
+      cmake -D CMAKE_BUILD_TYPE="Release" \
+            -D CMAKE_INSTALL_PREFIX="${BUILD_PREFIX}" \
+            -D CMAKE_INSTALL_LIBDIR=lib \
+            -D CMAKE_INSTALL_INCLUDEDIR=include \
+            -D CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -D PREFER_EXTERNAL_ZSTD=ON \
+            -D CMAKE_POSITION_INDEPENDENT_CODE=1 \
+            -D BUILD_STATIC=0 \
+            -D BUILD_SHARED=1 \
+            -D BUILD_TESTS=1 \
+            -D BUILD_BENCHMARKS=0 \
+            -D DEACTIVATE_SNAPPY=0 \
+            -D PREFER_EXTERNAL_LZ4=ON \
+            -D PREFER_EXTERNAL_ZLIB=ON \
+            ..
 
       make -j$(nproc)
       make install
-
-      # symlink so that "auditwheel repair" finds the shared library in its default search paths
-      ln -s /usr/local/lib64/libblosc.so.$BLOSC_VERSION /usr/local/lib/libblosc.so.1
     popd
 }
 
@@ -97,7 +111,9 @@ build_hdf5() {
             -D HDF5_BUILD_UTILS=OFF \
             -D HDF5_ALLOW_EXTERNAL_SUPPORT:STRING=NO \
             -D HDF5_ENABLE_ZLIB_SUPPORT=ON \
-            -D HDF5_ENABLE_SZIP_SUPPORT=ON
+            -D HDF5_ENABLE_SZIP_SUPPORT=ON \
+            -D H5_DEFAULT_PLUGINDIR="${BUILD_PREFIX}/lib/hdf5/plugin" \
+
       make -C build -j "$(nproc)"
       make -C build install
     popd
@@ -112,14 +128,15 @@ build_netcdf() {
     tar zxf "v${NETCDF_VERSION}.tar.gz" --strip-components=1 --directory netcdf
 
       cmake netcdf -B netcdf-build \
-          -DENABLE_NETCDF4=on \
-          -DNETCDF_ENABLE_HDF5=on \
-          -DCMAKE_INSTALL_LIBDIR=lib \
-          -DNETCDF_ENABLE_DAP=on \
-          -DNETCDF_ENABLE_TESTS=off \
-          -DENABLE_PLUGIN_INSTALL=yes \
-          -DBUILD_SHARED_LIBS=on \
-          -DCMAKE_BUILD_TYPE=Release
+          -D CMAKE_BUILD_TYPE=Release \
+          -D ENABLE_NETCDF4=on \
+          -D NETCDF_ENABLE_HDF5=on \
+          -D CMAKE_INSTALL_LIBDIR=lib \
+          -D NETCDF_ENABLE_DAP=on \
+          -D NETCDF_ENABLE_TESTS=off \
+          -D BUILD_SHARED_LIBS=on \
+          -D NETCDF_PLUGIN_INSTALL=ON \
+          -D NETCDF_WITH_PLUGIN_DIR="${BUILD_PREFIX}/lib/hdf5/plugin"
 
       cmake --build netcdf-build \
             --target install
