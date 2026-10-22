@@ -53,3 +53,5 @@ jobs:
         platforms: ${{ matrix.platforms }}
         push: ${{ github.event_name != 'pull_request' }}
         tags: ghcr.io/${{ env.REPO_OWNER_LOWER }}/${{ matrix.prefix }}_${{ matrix.version }}_${{ matrix.arch }}-netcdf
+      env:
+        BUILDKIT_STEP_LOG_MAX_SIZE: -1 # Unlimited logs
